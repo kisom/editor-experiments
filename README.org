@@ -1,0 +1,128 @@
+#+TITLE: Experiments in Text Editors
+#+AUTHOR: K. Isom
+
+* Experiments in Text Editors
+** Introduction
+
+After using emacs for a while and reading up on Lisp Machines
+(particularly, [[https://en.wikipedia.org/wiki/ZWEI][Zwei]] and [[https://en.wikipedia.org/wiki/Zmacs][Zmacs]]), and playing around with [[https://common-lisp.net/project/climacs/][Climacs]], I've
+picked up some Opinions on text editing. I'm finding that I'm less
+thrilled with Emacs, and interested in some of the ideas of yore.
+
+What I'm looking for is a good Lisp editor that's more customised to
+my use, and that I can use Common Lisp to extend.
+
+*** Features
+
+    In thinking about it, my desired features are:
+
+    + Common Lisp-extensible. I want to be able to extend the editor
+      using Common Lisp.
+    + Lisp-aware editing mode. I love paredit, and I love the emacs
+      command =mark-sexp=; I'd like similar Lisp-aware editing
+      features. It would also be nice to be able to pull up the CLHS,
+      =#'documentation=, and =#'describe= documentation for code.
+    + Lisp-development features: something like SLIME. It would be nice
+      to be able to hook into a Lisp REPL.
+    + The ability to hook into a /clean/ Lisp session. If the editor is
+      implemented in Common Lisp, I don't want my Lisp session inside
+      the editor. I'd like an environment that more closely matches
+      what the Lisp code will see.
+    + Both a TUI and a GUI. Sometimes I want to SSH into a server to
+      edit running Lisp code, and it's not feasible to run X or a
+      graphical environment to do so. This probably means ncurses and a
+      CLIM interface.
+    + Support for source control. I'd settle for =git= only support,
+      but I'd like to eventually see darcs and mercurial support.
+    + I like the emacs concept of buffers and frames, and I'd like my
+      editor to be able to do the same. Quite often I use a
+      vertically-split frame with buffers in each. This would also be
+      useful for documentation and attaching to a Lisp REPL. However,
+      I'd like to extend this with a project or system-oriented
+      organisation. That is, something like the concept of a workspace
+      where I could easily pull up or switch between files (including
+      documentation) in an ASDF system.
+    + The emacs mini-buffer and =command-execute= functionality
+      (e.g. via M-x) is rather useful.
+    + Tab completion in the mini-buffer. I rarely tab complete in
+      source code. However, having an eldoc-esque system is
+      useful. When I type in a function or variable name, displaying
+      relevant information in the mini-buffer is quite useful.
+
+*** NIH
+
+    Given these requirements, what are the problems with Emacs? Why not
+    just emacs? What justifies looking into writing my own editor?
+   
+    + The first reason is extensibility via Common Lisp. It's somewhat
+      annoying to use an inferior lisp[fn:emacs-joke] to extend my
+      editor.
+    + Emacs is missing decent concurrency: installing a package or having
+      a long running elisp command shouldn't freeze my editor.
+    + I'd like to play around with the idea of workspaces; as far as I
+      know, none of the current Emacs modes for this are really quite
+      what I want.
+    + Emacs is GPL'd. I'd rather avoid the GPL[fn:license]. Mcclim
+      uses the GPL, so I may have to do this just using the LispWorks
+      CLIM. Or, the GPL may not be avoidable, and I'll between my
+      "I'll use the GPL over my cold dead keyboard" and wanting to
+      have this.
+    + I'd end up learning a lot about how editors work, and what goes
+      into a good editor.
+
+[fn:license] Ideally, this whole thing would be MIT-licensed.
+
+[fn:emacs-joke] =inferior-lisp= is the Emacs facility for accessing an
+    external Lisp. While elisp rates low on the list of Lisps I'd like
+    to use, I don't actually think it's inferior. To each their own.
+
+*** Research and notebooking
+
+    Before I start writing this, I plan on doing my research on the
+    topic. This means reading up on the design of Climacs and perhaps
+    poking through the [[https://git.metacircular.net/kyle/mit-lispm/tree/master/nzwei][Zwei code]]. There's also the book [[http://www.finseth.com/craft/][The Craft of
+    Text Editing]] that I plan on reading on. I'll probably design the
+    interface first.
+  
+    There are two possible approaches to this that I've been looking
+    into:
+  
+    1. In the style of Emacs, writing a core in C and using [[https://common-lisp.net/project/ecl/][ECL]] for
+       Common Lisp support. This will likely preclude a CLIM version.
+    2. Writing the entire editor in Common Lisp. This is the approach
+       I'd like to take.
+  
+    Climacs uses something called [[http://www.doc.gold.ac.uk/~mas01cr/papers/ilc2007/esa.pdf][ESA]], the Emacs-style application
+    library for CLIM. This is promising, but I'm not sure I want to use
+    this as I /think/ it precludes an ncurses version.
+
+    There will also likely be a number of sketches / prototypes to try
+    ideas out.
+
+*** Possible approaches
+
+   One thing I started thinking about last night while sleepless is
+   modeling buffers as CLOS classes:
+
+   + The =buffer= class as the superclass for buffers.
+   + A =file-buffer= class for files on disk.
+   + =interactive-buffer= for buffers representing interactive
+     sessions, such as a Lisp REPL or an OS shell.
+   + =memory-buffer= for a buffer similar to a =file-buffer= but not
+     backed by a disk file.
+   + An =irmin= or =[[https://github.com/kisom/nebula][nebula]]= backed buffer.
+
+*** Additional information
+
+   Saved here for my own notes:
+
+   + [[http://www.mirrorservice.org/sites/www.bitsavers.org/pdf/ti/explorer/2243192-0001A_Zmacs_Jun87.pdf][Zmacs editor reference]]
+   + [[http://www.textfiles.com/bitsavers/pdf/symbolics/software/genera_7/999020_Text_Editing_and_Processing_Jul86.pdf][Symbolics Genera 7.0 documentation, Book 3, Text Editing and Processing, July 1986]]
+   
+
+** Prototypes
+
+   + pe1: Prototype Editor 1. This didn't work. It also required
+     LispWorks, which is less ideal. Delivering a standalone
+     application didn't include any Lisp evaluation facilities.
+
